@@ -1,0 +1,64 @@
+
+rule_files:
+  # указать путь к файлам с прваилами 
+  - .generated_with_alerts/prom_rules/shop_cart-add_30d.slo.rules.yml
+
+evaluation_interval: 1m
+
+# Допишите нужные вам тесты
+tests:
+  - name: "ServiceSLOViolation critical alert triggered"
+    interval: 1m
+    input_series: # simulate the data (starts at 0)
+      # используются для запросов в description
+      - series: slo:time_period:days{ sloth_service="shop", sloth_slo="cart-add_availabilty"}
+        values: "30.0+0x100"
+      - series: slo:period_error_budget_remaining:ratio{ sloth_service="shop", sloth_slo="cart-add_availabilty"}
+        values: "0.55+0x100"
+      - series: slo:current_burn_rate:ratio{ sloth_service="shop", sloth_slo="cart-add_availabilty" }
+        values: "6.0+0x100"
+
+      # основные данные метрики
+      - series: slo:sli_error:ratio_rate5m{sloth_id="shop-cart-add_availabilty", sloth_service="shop", sloth_slo="cart-add_availabilty", test_series="series1"}
+        values: "1.0+5x100"
+      - series: slo:sli_error:ratio_rate1h{sloth_id="shop-cart-add_availabilty", sloth_service="shop", sloth_slo="cart-add_availabilty", test_series="series1"}
+        values: "0.0+1x100"
+
+    alert_rule_test:
+      - alertname: ServiceSLOViolation
+        eval_time: 0m # 4 minute from start
+        exp_alerts: # nothing yet
+      - alertname: ServiceSLOViolation
+        eval_time: 10m # after 6m from start
+        exp_alerts:
+          - exp_labels:
+              alert_class: slo_violation
+              alert_type: symptom
+              alertname: ServiceSLOViolation
+              service: shop
+              severity: critical
+              slo: cart-add_availabilty
+              sloth_id: shop-cart-add_availabilty
+              sloth_service: shop
+              sloth_severity: page
+              sloth_slo: cart-add_availabilty
+              source: slo
+              test_series: series1
+              slack_channel: site-monitoring
+            exp_annotations:
+              description: |
+                SLO: **shop-cart-add_availabilty**  \
+                Высокий расход бюджета ошибок услуги - более 2% за 1 час или 5% за 6 часов. Это серьезно.  \
+                Проверьте состояние на графиках, если тренд не меняется более 5 минут после этого оповещения, то зарегистрируйте инцидент.
+
+              doc_url: https://confluence/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22shop-cart-add_availabilty%5C%22%22
+              grafana_dashboard_id: slo-detail/slo-detalizatsiia
+              grafana_dashboard_link: https://grafana/d/slo-detail?from=now-6h/m&to=now-1m/m&var-service=shop&var-slo=cart-add_availabilty
+              grafana_min_zoom_hours: 6
+              grafana_panel_id: 18
+              grafana_variables: service,slo
+              link: https://confluence/dosearchsite.action?cql=siteSearch%20~%20%22ServiceSLOViolation%22
+              runbook: docs/monitoring/slo-alerts/slo-violation-alert.md
+              slack_mention: "@duty-shop"
+              summary: Слишком высокая скорость расхода бюджета ошибок
+              title: (page) shop cart-add_availabilty SLO error budget burn rate is too fast.

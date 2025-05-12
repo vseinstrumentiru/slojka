@@ -1,0 +1,140 @@
+x-info:
+  owner: "Команда Онлайн-продажи"
+  repo: https://git/myshop
+x-alert-config:
+  slack_alert_channel_primary: &slack_alert_channel_primary shop-monitoring
+  slack_alert_mention_primary: &slack_alert_mention_primary "@duty-shop"
+  slack_alert_channel_secondary: &slack_alert_channel_secondary slo-warnings
+x-slo-window: 90d
+
+_common_blocks:
+  alerting_disabled_def: &alerting_disabled_def
+    page_alert:
+      disable: true
+    ticket_alert:
+      disable: true
+  alerting_enabled_def: &alerting_enabled_def
+    name: "ServiceSLOViolation"
+    labels:
+      service: "{{ $labels.sloth_service }}"
+      title: "{{ $labels.title }}"
+      slo: "{{ $labels.sloth_slo }}"
+      sli_type: "{{ $labels.category }}"
+      source: "slo"
+      alert_class: slo_violation
+      alert_type: symptom
+    annotations:
+      doc_url: https://confluence/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22{{ $labels.sloth_service }}-{{ $labels.sloth_slo }}%5C%22%22
+      grafana_dashboard_id: slo-detail/slo-detalizatsiia
+      grafana_dashboard_link: https://grafana/d/slo-detail?from=now-6h/m&to=now-1m/m&var-service={{ $labels.sloth_service }}&var-slo={{ $labels.sloth_slo }}
+      grafana_min_zoom_hours: "6"
+      grafana_panel_id: "18"
+      grafana_variables: service,slo
+      link: https://confluence/dosearchsite.action?cql=siteSearch%20~%20%22ServiceSLOViolation%22
+      runbook: docs/monitoring/slo-alerts/slo-violation-alert.md
+    page_alert:
+      labels:
+        severity: critical
+        slack_channel: *slack_alert_channel_primary
+      annotations:
+        slack_mention: *slack_alert_mention_primary
+        summary: "Слишком высокая скорость расхода бюджета ошибок"
+        description: |
+          SLO: **{{ $labels.sloth_service }}-{{ $labels.sloth_slo }}**  \
+          Высокий расход бюджета ошибок услуги - более 2% за 1 час или 5% за 6 часов. Это серьезно.  \
+          Проверьте состояние на графиках, если тренд не меняется более 5 минут после этого оповещения, то зарегистрируйте инцидент.
+    ticket_alert:
+      labels:
+        severity: warning
+        slack_channel: *slack_alert_channel_secondary
+      annotations:
+        summary: "Повышенная скорость расхода бюджета ошибок"
+        description: |
+          SLO: **{{ $labels.sloth_service }}-{{ $labels.sloth_slo }}**  \
+          Расход бюджета ошибок услуги выше нормального.  \
+          Израсходовано более 10% в интервале 1 или 3 дня. Это может быть предвестником проблем. Выделите время на проверку. Проверьте графики.
+
+version: "prometheus/v1"
+service: "shop"
+labels:
+  title: "Добавить в корзину"
+slos:
+  - name: "cart-add_90d_availabilty"
+    objective: 99.00
+    description: |
+      "SLO доступность для HTTP запросов 'Добавить в корзину'"
+    labels:
+      category: availability
+      slo_version: 1
+    sli:
+      events:
+        error_query: |
+          # Неудовлетворительные запросы
+          sum(
+            increase(
+              http_server_duration_milliseconds_count{ service=~"shop-rest", namespace="production", http_method="POST", http_route="/cart/add", http_status_code=~"5[0-9]{2}|404|0" }[{{.window}}]
+            ) or on() vector(0)
+          )
+          +
+          sum(
+            increase(
+              http_server_duration_milliseconds_count{ service=~"shop-rest-v2", namespace="production", http_method="POST", http_route="/v2/cart/add", http_status_code=~"5[0-9]{2}|404|0" }[{{.window}}]
+            ) or on() vector(0)
+          )
+        total_query: |
+          # Походящие запросы  
+          sum(
+            increase(
+              http_server_duration_milliseconds_count{ service=~"shop-rest", namespace="production", http_method="POST", http_route="/cart/add" }[{{.window}}]
+            ) or on() vector(0)
+          )
+          +
+          sum(
+            increase(
+              http_server_duration_milliseconds_count{ service=~"shop-rest-v2", namespace="production", http_method="POST", http_route="/v2/cart/add" }[{{.window}}]
+            ) or on() vector(0)
+          )
+    alerting:
+      <<: *alerting_enabled_def
+
+  - name: "cart-add_90d_latency"
+    objective: 99.90
+    description: |
+      "SLO время ответа для HTTP запросов 'Добавить в корзину'"
+    labels:
+      category: latency
+      slo_version: 2
+    sli:
+      raw: # sloth не поддерживает success_query, потому конструируем формулу SLO как "1 - отношение неподходящих запросов", см. https://github.com/slok/sloth/issues/140
+        # MetricQL
+        error_ratio_query: |
+          1 - (
+            # быстрые запросы "хорошие"
+            sum(
+              increase(
+                http_server_duration_milliseconds_bucket{ le="1000", service=~"shop-rest", namespace="production", http_method="POST", http_route="/cart/add", http_status_code!~"5[0-9]{2}|404|0" }[{{.window}}]
+              ) or on() vector(0)
+            )
+            +
+            sum(
+              increase(
+                http_server_duration_milliseconds_bucket{ le="1000", service=~"shop-rest-v2", namespace="production", http_method="POST", http_route="/v2/cart/add", http_status_code!~"5[0-9]{2}|404|0" }[{{.window}}]
+              ) or on() vector(0)
+            )
+          )
+          / # делим на
+          ( # количество подходящих запросов
+            sum(
+              increase(
+                http_server_duration_milliseconds_count{ service=~"shop-rest", namespace="production", http_method="POST", http_route="/cart/add", http_status_code!~"5[0-9]{2}|404|0" }[{{.window}}]
+              ) or on() vector(0)
+            )
+            +
+            sum(
+              increase(
+                http_server_duration_milliseconds_count{ service=~"shop-rest-v2", namespace="production", http_method="POST", http_route="/v2/cart/add", http_status_code!~"5[0-9]{2}|404|0" }[{{.window}}]
+              ) or on() vector(0)
+            )
+          ) or on() vector(0)
+    alerting:
+      <<: *alerting_enabled_def

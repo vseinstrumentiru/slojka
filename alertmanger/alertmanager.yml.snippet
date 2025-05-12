@@ -1,0 +1,53 @@
+# Добавать в alertmanager.yml
+
+# Каталог с подгружаемыми шаблонами
+templates:
+  - "/путь_к_alertmanager/templates/notification_template.tmpl"
+
+
+# Основной маршрут. Все алерты сначала попадают сюда, он не должен иметь директив match,matcher
+route:
+  ...
+  routes:
+    ...
+    # для отладки алерт отправить с меткой debug="true" 
+    - receiver: "alertmanager:debug:slack"
+      matchers:
+        - debug=~"true"
+      group_by: ["alertname", "datacenter", "service"]
+    # направить алерт в канал мессенджера указанные в метке slack_channel
+    - receiver: "dynamic-channel-slack-receiver"
+      matchers:
+        - slack_channel=~"^[@#a-z0-9][a-z0-9._-]*$"
+      group_by: ["alertname", "service", "severity"]
+
+
+receivers:
+  ...
+   - name: "alertmanager:debug:slack"
+    slack_configs:
+      - channel: "#x-alerts-debugging"
+        title: !unsafe |-
+          DEBUG TEST ALERT: - [{{ .Status | toUpper -}}
+          {{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{- end -}}
+          ] {{ .CommonLabels.alertname }}
+        text: !unsafe |-
+          Receiver: {{ .Receiver }}
+          Status: {{ .Status }}
+          ExternalURL: {{ .ExternalURL }}
+          GroupLabels: {{ printf "%#v" .GroupLabels }}
+          CommonLabels: {{ printf "%#v" .CommonLabels }}
+          CommonAnnotations: {{ printf "%#v" .CommonAnnotations }}
+          Alerts: {{ printf "%#v" .Alerts }}
+        send_resolved: true
+
+  - name: "dynamic-channel-slack-receiver"
+    slack_configs:
+      - channel: !unsafe '{{ template "slack.slojka.channel" . }}'
+        username: "alertmanager"
+        send_resolved: true
+        icon_emoji: !unsafe '{{ template "slack.slojka.icon" . }}'
+        color: !unsafe '{{ template "slack.slojka.color" . }}'
+        title: !unsafe '{{ template "slack.slojka.title" . }}'
+        title_link: !unsafe '{{ template "slack.slojka.link" . }}'
+        text: !unsafe '{{ template "slack.slojka.text" . }}'

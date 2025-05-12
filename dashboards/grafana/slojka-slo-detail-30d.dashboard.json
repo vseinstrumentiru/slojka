@@ -1,0 +1,1840 @@
+{
+    "__inputs": [
+        {
+            "name": "DS_NAME",
+            "label": "Select Datasource",
+            "description": "",
+            "type": "datasource",
+            "pluginId": "prometheus",
+            "pluginName": "Prometheus"
+        }
+    ],
+    "__elements": {},
+    "__requires": [
+        {
+            "type": "grafana",
+            "id": "grafana",
+            "name": "Grafana",
+            "version": "11.6.0"
+        },
+        {
+            "type": "panel",
+            "id": "heatmap",
+            "name": "Heatmap",
+            "version": ""
+        },
+        {
+            "type": "datasource",
+            "id": "prometheus",
+            "name": "Prometheus",
+            "version": "1.0.0"
+        },
+        {
+            "type": "panel",
+            "id": "stat",
+            "name": "Stat",
+            "version": ""
+        },
+        {
+            "type": "panel",
+            "id": "table",
+            "name": "Table",
+            "version": ""
+        },
+        {
+            "type": "panel",
+            "id": "text",
+            "name": "Text",
+            "version": ""
+        },
+        {
+            "type": "panel",
+            "id": "timeseries",
+            "name": "Time series",
+            "version": ""
+        }
+    ],
+    "annotations": {
+        "list": [
+            {
+                "builtIn": 1,
+                "datasource": {
+                    "type": "datasource",
+                    "uid": "grafana"
+                },
+                "enable": true,
+                "hide": true,
+                "iconColor": "yellow",
+                "name": "Annotations & Alerts",
+                "target": {
+                    "limit": 100,
+                    "matchAny": false,
+                    "tags": [],
+                    "type": "dashboard"
+                },
+                "type": "dashboard"
+            },
+            {
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "${Datasource}"
+                },
+                "enable": false,
+                "expr": "vi_gitlab_deployments{service_name=\"$service\"}",
+                "hide": false,
+                "iconColor": "green",
+                "name": "Deployments",
+                "tagKeys": "service_name,service_version,env,release_mode,dc",
+                "textFormat": "<pre>Version: {{service_version}}<br>Env:{{env}}<br>Release mode: {{release_mode}}<br>GitLab project: {{gitlab_project}}<br>Started by: {{gitlab_user}}<br>Datacenter: {{dc}}</pre>",
+                "titleFormat": "Deployed service: <code>{{service_name}}</code>",
+                "useValueForTime": "on"
+            },
+            {
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "${Datasource}"
+                },
+                "enable": false,
+                "expr": "vi_incident{service_name=~\"${incident_service_name}\"}",
+                "hide": false,
+                "iconColor": "red",
+                "name": "Incidents",
+                "tagKeys": "service_name,incident_id,state",
+                "textFormat": "<pre><a href=\"http://tasker.vseinstrumenti.ru/issue/{{incident_id}}\">{{incident_id}}</a><br>Состояние: {{state}}</pre>",
+                "titleFormat": "Инцидент на сервисе <code>{{service_name}}</code>",
+                "useValueForTime": "on"
+            }
+        ]
+    },
+    "description": "Доска детализации состояния SLO по услугам, по метрикам создаваемым sloth.dev - окно 30 дней.  Ниже описание переменных и аннотаций.\n== Переменные== \n* service - технический сервис в вашем каталоге сервисов; \n* slo - имя slo из файла sloth; \n* sli_window - интервалы для которых считается sli (набор окон/метрик создается sloth.dev автоматически и зависит от контрольного окна SLO, тут набор для окна в 30 дней); \n* min_burning_rate - минимальная кратность расхода бюджета ошибок (EBBR) по SLO от какой показывать графики SLI; \n* incident_service_name - имя сервиса инциденты которого показать на графиках (в идеале имя сервиса должно быть единым, тогда можно будет видеть инциденты по данному сервису на графиках SLI, эту метрику пишет система управления инцидентами, у нас еще не так потому оставлен ручной выбор)\n== Аннотации ==\nDeployments - включить показ данных о развертывании сервиса $service; \nIncidents - показывать данные об инцидентах сервиса $incident_service_name;",
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 1,
+    "id": null,
+    "links": [
+        {
+            "asDropdown": true,
+            "icon": "external link",
+            "includeVars": false,
+            "keepTime": true,
+            "tags": [
+                "slojka",
+                "slo-dashboard"
+            ],
+            "targetBlank": true,
+            "title": "Доски SLO",
+            "tooltip": "",
+            "type": "dashboards",
+            "url": ""
+        }
+    ],
+    "panels": [
+        {
+            "gridPos": {
+                "h": 2,
+                "w": 24,
+                "x": 0,
+                "y": 0
+            },
+            "id": 504,
+            "options": {
+                "code": {
+                    "language": "plaintext",
+                    "showLineNumbers": false,
+                    "showMiniMap": false
+                },
+                "content": "<h1>\r\n  <center>\r\n    SLO в окне ${budget_window_days} дней\r\n  <center>\r\n</h1>",
+                "mode": "markdown"
+            },
+            "pluginVersion": "11.6.0",
+            "type": "text"
+        },
+        {
+            "collapsed": true,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 2
+            },
+            "id": 36,
+            "panels": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "description": "SLO в которых уровень ошибок выше допустимого ",
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "palette-classic"
+                            },
+                            "custom": {
+                                "axisBorderShow": false,
+                                "axisCenteredZero": false,
+                                "axisColorMode": "text",
+                                "axisLabel": "",
+                                "axisPlacement": "auto",
+                                "barAlignment": 0,
+                                "barWidthFactor": 0.6,
+                                "drawStyle": "points",
+                                "fillOpacity": 10,
+                                "gradientMode": "none",
+                                "hideFrom": {
+                                    "graph": false,
+                                    "legend": false,
+                                    "tooltip": false,
+                                    "viz": false
+                                },
+                                "insertNulls": false,
+                                "lineInterpolation": "linear",
+                                "lineWidth": 1,
+                                "pointSize": 3,
+                                "scaleDistribution": {
+                                    "type": "linear"
+                                },
+                                "showPoints": "never",
+                                "spanNulls": true,
+                                "stacking": {
+                                    "group": "A",
+                                    "mode": "none"
+                                },
+                                "thresholdsStyle": {
+                                    "mode": "off"
+                                }
+                            },
+                            "mappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "green"
+                                    },
+                                    {
+                                        "color": "red",
+                                        "value": 80
+                                    }
+                                ]
+                            },
+                            "unit": "short"
+                        },
+                        "overrides": [
+                            {
+                                "matcher": {
+                                    "id": "byType",
+                                    "options": "number"
+                                },
+                                "properties": [
+                                    {
+                                        "id": "links",
+                                        "value": [
+                                            {
+                                                "title": "Поазать детализацию SLO: ${__field.labels.sloth_id}",
+                                                "url": "/d/slo-detail/?orgId=1&var-service=${__field.labels.sloth_service}&var-slo=${__field.labels.sloth_slo}&${__url_time_range}"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "gridPos": {
+                        "h": 9,
+                        "w": 15,
+                        "x": 0,
+                        "y": 3
+                    },
+                    "id": 56,
+                    "options": {
+                        "graph": {},
+                        "legend": {
+                            "calcs": [],
+                            "displayMode": "list",
+                            "placement": "right",
+                            "showLegend": true
+                        },
+                        "tooltip": {
+                            "hideZeros": false,
+                            "mode": "multi",
+                            "sort": "none"
+                        }
+                    },
+                    "pluginVersion": "11.6.0",
+                    "targets": [
+                        {
+                            "datasource": {
+                                "type": "prometheus",
+                                "uid": "${Datasource}"
+                            },
+                            "editorMode": "code",
+                            "exemplar": true,
+                            "expr": "slo:current_burn_rate:ratio{sloth_service=~\"${service}\"} > ${min_burning_rate}",
+                            "interval": "",
+                            "legendFormat": "{{sloth_id}}",
+                            "queryType": "randomWalk",
+                            "range": true,
+                            "refId": "A"
+                        }
+                    ],
+                    "title": "График превышений допустимого уровня ошибок (EEBR) > x${min_burning_rate}",
+                    "type": "timeseries"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "description": "SLO в которых уровень ошибок выше допустимого ",
+                    "fieldConfig": {
+                        "defaults": {
+                            "color": {
+                                "mode": "thresholds"
+                            },
+                            "custom": {
+                                "align": "auto",
+                                "cellOptions": {
+                                    "type": "auto"
+                                },
+                                "filterable": false,
+                                "inspect": false
+                            },
+                            "mappings": [],
+                            "thresholds": {
+                                "mode": "absolute",
+                                "steps": [
+                                    {
+                                        "color": "green"
+                                    },
+                                    {
+                                        "color": "red",
+                                        "value": 80
+                                    }
+                                ]
+                            }
+                        },
+                        "overrides": []
+                    },
+                    "gridPos": {
+                        "h": 9,
+                        "w": 9,
+                        "x": 15,
+                        "y": 3
+                    },
+                    "id": 38,
+                    "options": {
+                        "cellHeight": "sm",
+                        "footer": {
+                            "countRows": false,
+                            "fields": "",
+                            "reducer": [
+                                "sum"
+                            ],
+                            "show": false
+                        },
+                        "frameIndex": 0,
+                        "showHeader": true,
+                        "sortBy": [
+                            {
+                                "desc": true,
+                                "displayName": "Burning rate"
+                            }
+                        ]
+                    },
+                    "pluginVersion": "11.6.0",
+                    "targets": [
+                        {
+                            "datasource": {
+                                "type": "prometheus",
+                                "uid": "${Datasource}"
+                            },
+                            "editorMode": "code",
+                            "exemplar": true,
+                            "expr": "slo:current_burn_rate:ratio{sloth_service=~\"${service}\"} > ${min_burning_rate}",
+                            "format": "table",
+                            "instant": true,
+                            "interval": "",
+                            "legendFormat": "",
+                            "queryType": "randomWalk",
+                            "refId": "A"
+                        }
+                    ],
+                    "title": "SLO быстро расходующие бюджет ошибок (EBBR>${min_burning_rate}x)",
+                    "transformations": [
+                        {
+                            "id": "filterFieldsByName",
+                            "options": {
+                                "include": {
+                                    "names": [
+                                        "sloth_service",
+                                        "sloth_slo"
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "id": "renameByRegex",
+                            "options": {
+                                "regex": "sloth_service",
+                                "renamePattern": "Service"
+                            }
+                        },
+                        {
+                            "id": "renameByRegex",
+                            "options": {
+                                "regex": "sloth_slo",
+                                "renamePattern": "SLO"
+                            }
+                        },
+                        {
+                            "id": "renameByRegex",
+                            "options": {
+                                "regex": "Value",
+                                "renamePattern": "EBBR"
+                            }
+                        }
+                    ],
+                    "type": "table"
+                }
+            ],
+            "title": "Сводка нарушений SLO для ${service}",
+            "type": "row"
+        },
+        {
+            "collapsed": false,
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 3
+            },
+            "id": 8,
+            "panels": [],
+            "repeat": "slo",
+            "title": "SLO: ${service}-${slo}",
+            "type": "row"
+        },
+        {
+            "description": "Ссылка на документ описание SLO",
+            "gridPos": {
+                "h": 2,
+                "w": 4,
+                "x": 0,
+                "y": 4
+            },
+            "id": 464,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": " Описание SLO/SLI",
+                    "url": "https://kb.vseinstrumenti.ru/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22"
+                }
+            ],
+            "options": {
+                "code": {
+                    "language": "plaintext",
+                    "showLineNumbers": false,
+                    "showMiniMap": false
+                },
+                "content": "<a href=\"https://kb.vseinstrumenti.ru/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22\" title=\"Вы должны залогиниться в Confluence для просмотра этого документа\" \r\nstyle=\" padding: 1em; border: 1px #666 solid; color: rgb(192, 216, 255); text-align: center; display: block; margin-left: auto; margin-right: auto;  width: 100%\"\r\n>Открыть документацию SLO ⮫</a>",
+                "mode": "html"
+            },
+            "pluginVersion": "11.6.0",
+            "transparent": true,
+            "type": "text"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "description": "Идентификатор SLI/SLO",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "max": 1,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "blue"
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 8,
+                "x": 4,
+                "y": 4
+            },
+            "id": 15,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": " Описание SLO/SLI",
+                    "url": "https://kb.vseinstrumenti.ru/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22"
+                }
+            ],
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "vertical",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {},
+                "textMode": "name",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "vector(1)\r\n#slo:objective:ratio{sloth_service=\"${service}\", sloth_slo=\"${slo}\"}",
+                    "format": "time_series",
+                    "instant": true,
+                    "interval": "",
+                    "legendFormat": "${service}: ${slo}",
+                    "queryType": "randomWalk",
+                    "refId": "A"
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "description": "Остаток бюджета ошибок за последние ${budget_window} дней (скользящее окно)",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "max": 1,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "semi-dark-red"
+                            },
+                            {
+                                "color": "yellow",
+                                "value": 0
+                            },
+                            {
+                                "color": "green",
+                                "value": 0.6
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 3,
+                "x": 12,
+                "y": 4
+            },
+            "id": 187,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "vertical",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 12,
+                    "valueSize": 40
+                },
+                "textMode": "value_and_name",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "1-(\r\n  sum_over_time(\r\n    label_replace(\r\n       slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"}, \"slo_version\", \"0\", \"slo_version\", \"\"\r\n    )[${budget_window_days}d:1h]\r\n  ) \r\n  / on(sloth_id, slo_version)\r\n  (\r\n    label_replace(\r\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\r\n      \"slo_version\", \"0\", \"slo_version\", \"\"\r\n    ) *on() group_left() (24 * ${budget_window_days})\r\n  )\r\n)",
+                    "instant": true,
+                    "interval": "",
+                    "legendFormat": "Остаток бюджета (последние ${budget_window_days}d) v{{slo_version}}",
+                    "queryType": "randomWalk",
+                    "range": false,
+                    "refId": "A"
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [
+                        {
+                            "options": {
+                                "from": -1,
+                                "result": {
+                                    "index": 0,
+                                    "text": "-"
+                                },
+                                "to": 0
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "options": {
+                                "from": 1e-10,
+                                "result": {
+                                    "index": 1,
+                                    "text": "ДА ⇊🔥"
+                                },
+                                "to": 1
+                            },
+                            "type": "range"
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "transparent"
+                            },
+                            {
+                                "color": "red",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 3,
+                "x": 15,
+                "y": 4
+            },
+            "id": 14,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "vertical",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 12
+                },
+                "textMode": "value_and_name",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "max(ALERTS{sloth_service=\"${service}\", sloth_slo=\"${slo}\", sloth_severity=\"page\"}) or on() vector(0)",
+                    "instant": true,
+                    "interval": "",
+                    "legendFormat": "Тревога",
+                    "queryType": "randomWalk",
+                    "refId": "A"
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [
+                        {
+                            "options": {
+                                "from": -1,
+                                "result": {
+                                    "index": 0,
+                                    "text": "-"
+                                },
+                                "to": 0
+                            },
+                            "type": "range"
+                        },
+                        {
+                            "options": {
+                                "from": 1e-10,
+                                "result": {
+                                    "index": 1,
+                                    "text": "да ↓⚠"
+                                },
+                                "to": 1
+                            },
+                            "type": "range"
+                        }
+                    ],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "transparent"
+                            },
+                            {
+                                "color": "orange",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 3,
+                "x": 18,
+                "y": 4
+            },
+            "id": 13,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "vertical",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 12
+                },
+                "textMode": "value_and_name",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "max(ALERTS{sloth_service=\"${service}\", sloth_slo=\"${slo}\", sloth_severity=\"ticket\"}) OR on() vector(0)",
+                    "instant": true,
+                    "interval": "",
+                    "legendFormat": "Предупреждение",
+                    "queryType": "randomWalk",
+                    "refId": "A"
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "description": "Кратность превышения допустимого уровня ошибок (EBBR) - Во сколько раз уровень ошибок выше, чем допустимый уровень ошибок исходя из бюджета ошибок на окно SLO\n",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "max": 1,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "transparent"
+                            },
+                            {
+                                "color": "orange",
+                                "value": 0.9
+                            },
+                            {
+                                "color": "semi-dark-red",
+                                "value": 1
+                            }
+                        ]
+                    },
+                    "unit": "short"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 3,
+                "w": 3,
+                "x": 21,
+                "y": 4
+            },
+            "id": 11,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "vertical",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 12,
+                    "valueSize": 16
+                },
+                "textMode": "value_and_name",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "slo:current_burn_rate:ratio{sloth_service=\"${service}\", sloth_slo=\"${slo}\"} or on() vector(0)",
+                    "instant": true,
+                    "interval": "",
+                    "legendFormat": "Кратность ошибок (EBBR)",
+                    "queryType": "randomWalk",
+                    "range": false,
+                    "refId": "A"
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "description": "Установленный целевой уровень обслуживания",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "max": 1,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "#C0D8FF"
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 1,
+                "w": 4,
+                "x": 0,
+                "y": 6
+            },
+            "id": 10,
+            "options": {
+                "colorMode": "background_solid",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "horizontal",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 16,
+                    "valueSize": 20
+                },
+                "textMode": "name",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "sloth_slo_info{sloth_service=\"${service}\", sloth_slo=\"${slo}\"}",
+                    "instant": true,
+                    "interval": "",
+                    "legendFormat": "SLO {{sloth_objective}}%",
+                    "queryType": "randomWalk",
+                    "refId": "A"
+                }
+            ],
+            "type": "stat"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "description": "Значения показателя уровня обслуживания (SLI): ${service}-${slo}",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "axisSoftMax": 0.95,
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 30,
+                        "gradientMode": "opacity",
+                        "hideFrom": {
+                            "graph": false,
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineStyle": {
+                            "fill": "solid"
+                        },
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": false,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "off"
+                        }
+                    },
+                    "decimals": 2,
+                    "mappings": [],
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "green"
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "slo:objective:ratio"
+                        },
+                        "properties": [
+                            {
+                                "id": "custom.fillOpacity",
+                                "value": 28
+                            },
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "orange",
+                                    "mode": "shades"
+                                }
+                            },
+                            {
+                                "id": "custom.lineStyle",
+                                "value": {
+                                    "dash": [
+                                        10,
+                                        10
+                                    ],
+                                    "fill": "dash"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "SLI"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "blue",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "ALERTS"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "dark-red",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 15,
+                "x": 0,
+                "y": 7
+            },
+            "id": 18,
+            "links": [
+                {
+                    "targetBlank": true,
+                    "title": "Описание SLI/SLO: ${service}-${slo}",
+                    "url": "https://kb.vseinstrumenti.ru/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22"
+                }
+            ],
+            "options": {
+                "graph": {},
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": false
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "multi",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "1 - (max(slo:sli_error:ratio_rate${sli_window}{sloth_service=\"${service}\", sloth_slo=\"${slo}\"}) OR on() vector(0))",
+                    "interval": "",
+                    "legendFormat": "SLI",
+                    "queryType": "randomWalk",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "label_replace(\r\n    slo:objective:ratio{sloth_service=\"${service}\", sloth_slo=\"${slo}\"},\r\n    \"slo_version\", \"0\", \"slo_version\", \"\"\r\n)",
+                    "hide": false,
+                    "instant": false,
+                    "interval": "",
+                    "legendFormat": "Objective (SLO v{{slo_version}})",
+                    "refId": "B"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "ALERTS{alertname=\"ServiceSLOViolation\", sloth_service=\"${service}\", sloth_slo=\"${slo}\",sloth_severity=\"page\"}",
+                    "hide": false,
+                    "instant": false,
+                    "legendFormat": "SLO Violation Alert Active",
+                    "range": true,
+                    "refId": "C"
+                }
+            ],
+            "title": "SLI/SLO",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "description": "График показывает диаграмму остатка бюджета ошибок в скользящем окне за последние ${budget_window_days} дней ",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "axisSoftMin": 0,
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 38,
+                        "gradientMode": "opacity",
+                        "hideFrom": {
+                            "graph": false,
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineStyle": {
+                            "fill": "solid"
+                        },
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": true,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "area"
+                        }
+                    },
+                    "mappings": [],
+                    "max": 1,
+                    "thresholds": {
+                        "mode": "percentage",
+                        "steps": [
+                            {
+                                "color": "red"
+                            },
+                            {
+                                "color": "dark-green",
+                                "value": 0
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Остаток реальный"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "yellow",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Остаток при идеальных условиях"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "text",
+                                    "mode": "fixed"
+                                }
+                            },
+                            {
+                                "id": "custom.gradientMode",
+                                "value": "none"
+                            },
+                            {
+                                "id": "custom.fillOpacity",
+                                "value": 0
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 9,
+                "x": 15,
+                "y": 7
+            },
+            "hideTimeOverride": true,
+            "id": 463,
+            "options": {
+                "graph": {},
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": false
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "multi",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "1-(\n  sum_over_time(\n    label_replace(\n       slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"}, \"slo_version\", \"0\", \"slo_version\", \"\"\n    )[${budget_window_days}d:1h]\n  ) \n  / on(sloth_id, slo_version)\n  (\n    label_replace(\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n      \"slo_version\", \"0\", \"slo_version\", \"\"\n    ) *on() group_left() (24 * ${budget_window_days})\n  )\n)",
+                    "hide": false,
+                    "interval": "1h",
+                    "legendFormat": "Остаток (SLO v{{slo_version}})",
+                    "queryType": "randomWalk",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "timeFrom": "now-30d/d",
+            "title": "Остаток бюджета (окно ${budget_window_days} дней)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "description": "Вот сколько раз уровень ошибок больше по отношению к допустимому уровню ошибок (AER). \n\nAER в час = бюджет ошибок / (30д * 24ч) \n\nПример. \n- SLO = 99.9%, Бюджет ошибок = 0.1% \n- В месяце 30 дней, это 43,200 минут. Таким образом, 0.1% времени — это 43.2 минуты\n- Бюджет ошибок на час EB_1h = 43.2 минуты / 720 часов = 0.06 минуты (3.6 секунды)\n- Допустим, за последний час у вас было ERR_1h = 10 секунд ошибок\n- Кратность уровня ошибок (EBBR) = ERR_1h/EB_1h = 10c/3.6c = 2.78 \n\nEBBR > 1 — значит мы расходуем бюджет быстрее, чем ожидается, при сохранении такого уровня, бюджет кончится раньше, чем за 30 дней\n\n",
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {
+                        "hideFrom": {
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "scaleDistribution": {
+                            "type": "linear"
+                        }
+                    }
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 15,
+                "x": 0,
+                "y": 15
+            },
+            "id": 87,
+            "options": {
+                "calculate": true,
+                "calculation": {},
+                "cellGap": 2,
+                "cellValues": {},
+                "color": {
+                    "exponent": 0.5,
+                    "fill": "#FADE2A",
+                    "mode": "opacity",
+                    "reverse": false,
+                    "scale": "exponential",
+                    "scheme": "Oranges",
+                    "steps": 128
+                },
+                "exemplars": {
+                    "color": "rgba(255,0,255,0.7)"
+                },
+                "filterValues": {
+                    "le": 1e-9
+                },
+                "legend": {
+                    "show": false
+                },
+                "rowsFrame": {
+                    "layout": "auto"
+                },
+                "showValue": "never",
+                "tooltip": {
+                    "mode": "none",
+                    "showColorScale": false,
+                    "yHistogram": false
+                },
+                "yAxis": {
+                    "axisPlacement": "left",
+                    "reverse": false,
+                    "unit": "short"
+                }
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "slo:current_burn_rate:ratio{sloth_service=\"${service}\", sloth_slo=\"${slo}\"} >0 ",
+                    "format": "time_series",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "Скорость расхода",
+                    "queryType": "randomWalk",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "title": "Кратность превышения допустимого уровня ошибок (EBBR)",
+            "type": "heatmap"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "description": "График показывает сколько осталось бюджета ошибок в календарном месяце (начиная от 1 числа и до конца месяца) ",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "palette-classic"
+                    },
+                    "custom": {
+                        "axisBorderShow": false,
+                        "axisCenteredZero": false,
+                        "axisColorMode": "text",
+                        "axisLabel": "",
+                        "axisPlacement": "auto",
+                        "barAlignment": 0,
+                        "barWidthFactor": 0.6,
+                        "drawStyle": "line",
+                        "fillOpacity": 38,
+                        "gradientMode": "opacity",
+                        "hideFrom": {
+                            "graph": false,
+                            "legend": false,
+                            "tooltip": false,
+                            "viz": false
+                        },
+                        "insertNulls": false,
+                        "lineInterpolation": "smooth",
+                        "lineStyle": {
+                            "fill": "solid"
+                        },
+                        "lineWidth": 1,
+                        "pointSize": 5,
+                        "scaleDistribution": {
+                            "type": "linear"
+                        },
+                        "showPoints": "never",
+                        "spanNulls": true,
+                        "stacking": {
+                            "group": "A",
+                            "mode": "none"
+                        },
+                        "thresholdsStyle": {
+                            "mode": "area"
+                        }
+                    },
+                    "mappings": [],
+                    "max": 1,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "red"
+                            },
+                            {
+                                "color": "transparent",
+                                "value": 0
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": [
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Остаток реальный"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "dark-yellow",
+                                    "mode": "fixed"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "matcher": {
+                            "id": "byName",
+                            "options": "Остаток при идеальных условиях"
+                        },
+                        "properties": [
+                            {
+                                "id": "color",
+                                "value": {
+                                    "fixedColor": "text",
+                                    "mode": "fixed"
+                                }
+                            },
+                            {
+                                "id": "custom.gradientMode",
+                                "value": "none"
+                            },
+                            {
+                                "id": "custom.fillOpacity",
+                                "value": 0
+                            }
+                        ]
+                    }
+                ]
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 9,
+                "x": 15,
+                "y": 15
+            },
+            "hideTimeOverride": true,
+            "id": 66,
+            "options": {
+                "graph": {},
+                "legend": {
+                    "calcs": [],
+                    "displayMode": "list",
+                    "placement": "bottom",
+                    "showLegend": false
+                },
+                "tooltip": {
+                    "hideZeros": false,
+                    "mode": "multi",
+                    "sort": "none"
+                }
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "1-(\n  sum_over_time(\n    (\n      label_replace(\n        slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n        \"slo_version\", \"0\", \"slo_version\", \"\"\n      )\n       * on() group_left() (\n         month() == bool vector(${__to:date:M})\n       )\n    )[32d:1h]\n  )\n  / on(sloth_id, slo_version)\n  (\n    label_replace(\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n      \"slo_version\", \"0\", \"slo_version\", \"\"\n    ) *on() group_left() (24 * days_in_month())\n  )\n)",
+                    "hide": false,
+                    "interval": "1h",
+                    "legendFormat": "Остаток реальный (SLO v{{slo_version}})",
+                    "queryType": "randomWalk",
+                    "range": true,
+                    "refId": "A"
+                },
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": true,
+                    "expr": "1 - sum_over_time(\n  (\n    (1 / (days_in_month() * 24)) *\n    (month() == bool vector(${__to:date:M}))\n  )[32d:1h]\n)",
+                    "hide": false,
+                    "interval": "",
+                    "legendFormat": "Остаток при идеальных условиях",
+                    "range": true,
+                    "refId": "B"
+                }
+            ],
+            "timeFrom": "now/M",
+            "timeShift": "0M/M",
+            "title": "Остаток бюджета за календарный месяц (справочно)",
+            "type": "timeseries"
+        },
+        {
+            "datasource": {
+                "type": "prometheus",
+                "uid": "${Datasource}"
+            },
+            "description": "Бюджета ошибок на календарный месяц осталось, отсчет от 1 до  28-31 числа (не скользящее окно!)",
+            "fieldConfig": {
+                "defaults": {
+                    "color": {
+                        "mode": "thresholds"
+                    },
+                    "mappings": [],
+                    "max": 1,
+                    "min": 0,
+                    "thresholds": {
+                        "mode": "absolute",
+                        "steps": [
+                            {
+                                "color": "transparent"
+                            }
+                        ]
+                    },
+                    "unit": "percentunit"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 1,
+                "w": 24,
+                "x": 0,
+                "y": 21
+            },
+            "id": 76,
+            "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "auto",
+                "orientation": "vertical",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                    "calcs": [
+                        "lastNotNull"
+                    ],
+                    "fields": "",
+                    "values": false
+                },
+                "showPercentChange": false,
+                "text": {
+                    "titleSize": 14,
+                    "valueSize": 14
+                },
+                "textMode": "value_and_name",
+                "wideLayout": true
+            },
+            "pluginVersion": "11.6.0",
+            "targets": [
+                {
+                    "datasource": {
+                        "type": "prometheus",
+                        "uid": "${Datasource}"
+                    },
+                    "editorMode": "code",
+                    "exemplar": false,
+                    "expr": "1-(\n  sum_over_time(\n    (\n      label_replace(\n        slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n        \"slo_version\", \"0\", \"slo_version\", \"\"\n      )\n       * on() group_left() (\n         month() == bool vector(${__to:date:M})\n       )\n    )[32d:1h]\n  )\n  / on(sloth_id, slo_version)\n  (\n    label_replace(\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n      \"slo_version\", \"0\", \"slo_version\", \"\"\n    ) *on() group_left() (24 * days_in_month())\n  )\n)",
+                    "instant": false,
+                    "interval": "1h",
+                    "legendFormat": "Остаток бюджета (за календарный месяц) (SLO v{{slo_version}})",
+                    "queryType": "randomWalk",
+                    "range": true,
+                    "refId": "A"
+                }
+            ],
+            "transparent": true,
+            "type": "stat"
+        }
+    ],
+    "refresh": "",
+    "schemaVersion": 41,
+    "tags": [
+        "slo",
+        "sli",
+        "service levels",
+        "sloth",
+        "slo-dashboard",
+        "slojka",
+        "vseinstrumenti"
+    ],
+    "templating": {
+        "list": [
+            {
+                "description": "",
+                "hide": 2,
+                "label": "Datasource",
+                "name": "Datasource",
+                "query": "${DS_NAME}",
+                "skipUrlSync": true,
+                "type": "constant",
+                "current": {
+                    "value": "${DS_NAME}",
+                    "text": "${DS_NAME}",
+                    "selected": false
+                },
+                "options": [
+                    {
+                        "value": "${DS_NAME}",
+                        "text": "${DS_NAME}",
+                        "selected": false
+                    }
+                ]
+            },
+            {
+                "current": {},
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "${Datasource}"
+                },
+                "definition": "query_result((slo:objective:ratio{} * on(sloth_id) group_left()  count by (sloth_id)   (slo:period_error_budget_remaining:ratio{sloth_window=\"30d\"})))",
+                "includeAll": false,
+                "name": "service",
+                "options": [],
+                "query": {
+                    "qryType": 3,
+                    "query": "query_result((slo:objective:ratio{} * on(sloth_id) group_left()  count by (sloth_id)   (slo:period_error_budget_remaining:ratio{sloth_window=\"30d\"})))",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "/.*sloth_service=\"([^\"]*).*/",
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "current": {},
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "${Datasource}"
+                },
+                "definition": "query_result(( slo:objective:ratio{sloth_service=\"$service\"} * on(sloth_id) group_left()   count by (sloth_id)  (slo:period_error_budget_remaining:ratio{sloth_service=\"$service\", sloth_window=\"30d\"})))",
+                "description": "",
+                "includeAll": true,
+                "multi": true,
+                "name": "slo",
+                "options": [],
+                "query": {
+                    "qryType": 3,
+                    "query": "query_result(( slo:objective:ratio{sloth_service=\"$service\"} * on(sloth_id) group_left()   count by (sloth_id)  (slo:period_error_budget_remaining:ratio{sloth_service=\"$service\", sloth_window=\"30d\"})))",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "/.*sloth_slo=\"([^\"]*).*/",
+                "sort": 5,
+                "type": "query"
+            },
+            {
+                "auto": false,
+                "auto_count": 50,
+                "auto_min": "5m",
+                "current": {
+                    "text": "5m",
+                    "value": "5m"
+                },
+                "description": "The time window used for the SLIs visualization",
+                "label": "SLI window",
+                "name": "sli_window",
+                "options": [
+                    {
+                        "selected": true,
+                        "text": "5m",
+                        "value": "5m"
+                    },
+                    {
+                        "selected": false,
+                        "text": "30m",
+                        "value": "30m"
+                    },
+                    {
+                        "selected": false,
+                        "text": "1h",
+                        "value": "1h"
+                    },
+                    {
+                        "selected": false,
+                        "text": "2h",
+                        "value": "2h"
+                    },
+                    {
+                        "selected": false,
+                        "text": "6h",
+                        "value": "6h"
+                    },
+                    {
+                        "selected": false,
+                        "text": "1d",
+                        "value": "1d"
+                    },
+                    {
+                        "selected": false,
+                        "text": "3d",
+                        "value": "3d"
+                    },
+                    {
+                        "selected": false,
+                        "text": "7d",
+                        "value": "7d"
+                    },
+                    {
+                        "selected": false,
+                        "text": "30d",
+                        "value": "30d"
+                    }
+                ],
+                "query": "5m,30m,1h,2h,6h,1d,3d,7d,30d",
+                "refresh": 2,
+                "type": "interval"
+            },
+            {
+                "current": {
+                    "text": "1",
+                    "value": "1"
+                },
+                "description": "Минимальная Кратность расхода бюджета ошибок (EBBR)  для показа на доске",
+                "label": "Мин. EBBR",
+                "name": "min_burning_rate",
+                "options": [
+                    {
+                        "selected": true,
+                        "text": "1",
+                        "value": "1"
+                    }
+                ],
+                "query": "1",
+                "type": "textbox"
+            },
+            {
+                "current": {},
+                "datasource": {
+                    "type": "prometheus",
+                    "uid": "${Datasource}"
+                },
+                "definition": "label_values(vi_incident,service_name)",
+                "description": "Влияет на показ аннотаций Incidents, если включен показ.\nВыберите для каких сервисов показывать инциденты. Если выбрать все, то загрузка может занять длительное время.\n",
+                "includeAll": true,
+                "label": "Инциденты в сервисе",
+                "multi": true,
+                "name": "incident_service_name",
+                "options": [],
+                "query": {
+                    "query": "label_values(vi_incident,service_name)",
+                    "refId": "PrometheusVariableQueryEditor-VariableQuery"
+                },
+                "refresh": 1,
+                "regex": "",
+                "sort": 1,
+                "type": "query"
+            },
+            {
+                "description": "",
+                "hide": 2,
+                "name": "budget_window_days",
+                "query": "30",
+                "skipUrlSync": true,
+                "type": "constant",
+                "current": {
+                    "value": "30",
+                    "text": "30",
+                    "selected": false
+                },
+                "options": [
+                    {
+                        "value": "30",
+                        "text": "30",
+                        "selected": false
+                    }
+                ]
+            }
+        ]
+    },
+    "time": {
+        "from": "now-15m",
+        "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Slojka/SLO: Детализация 30d",
+    "uid": "slojka-slo-detail-30d",
+    "version": 4,
+    "weekStart": ""
+}
