@@ -1,0 +1,28 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: make install-dependencies
+
+    - name: Run check
+      run: make validate-metrics-catalog-spec
+
+    - name: Generate files without alert rules
+      run: make all SLOTH_DISABLE_ALERTS=true OUT_GENERATED_DIR=.generated && make validate-prom-rules OUT_GENERATED_DIR=.generated
+    - name: Generate files with alert rules
+      run: make all OUT_GENERATED_DIR=.generated_with_alerts && make validate-prom-rules OUT_GENERATED_DIR=.generated_with_alerts
+       
+        
