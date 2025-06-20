@@ -15,14 +15,23 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install dependencies
+      working-directory: slo-catalog/sloth
       run: make install-dependencies
 
     - name: Run check
+      working-directory: slo-catalog/sloth
       run: make validate-metrics-catalog-spec
 
     - name: Generate files without alert rules
-      run: make all SLOTH_DISABLE_ALERTS=true OUT_GENERATED_DIR=.generated && make validate-prom-rules OUT_GENERATED_DIR=.generated
+      working-directory: slo-catalog/sloth
+      run: |
+        make all SLOTH_DISABLE_ALERTS=true OUT_GENERATED_DIR=.generated
+        make validate-prom-rules OUT_GENERATED_DIR=.generated
+      
     - name: Generate files with alert rules
-      run: make all OUT_GENERATED_DIR=.generated_with_alerts && make validate-prom-rules OUT_GENERATED_DIR=.generated_with_alerts
+      working-directory: slo-catalog/sloth
+      run: |
+        make all OUT_GENERATED_DIR=.generated_with_alerts
+        make validate-prom-rules OUT_GENERATED_DIR=.generated_with_alerts
        
         
