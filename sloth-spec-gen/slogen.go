@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"text/template"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -77,7 +78,7 @@ slos:
       "SLO доступность услуги {{.RussianSloTitle}}"
     labels:
       category: availability
-      slo_version: 1
+      slo_version: {{.SloVersion}}
     sli:
       events:
         error_query: |
@@ -106,7 +107,7 @@ slos:
       "SLO время ответа услуги {{.RussianSloTitle}}"
     labels:
       category: latency
-      slo_version: 1
+      slo_version: {{.SloVersion}}
     sli:
       raw:
         error_ratio_query: |
@@ -141,6 +142,7 @@ type TemplateVars struct {
 	ServiceName             string
 	RussianSloTitle         string
 	SloName                 string
+	SloVersion              string
 	NeedAvailabilitySlo     bool
 	NeedLatencySlo          bool
 	EnableAlerts            bool
@@ -241,6 +243,8 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 	tmplVars := TemplateVars{}
+
+	tmplVars.SloVersion = time.Now().Format("20060102") + "_01"
 
 	tmplVars.ServiceName = askRequired(reader, "Enter service name: ", "")
 	tmplVars.SloName = askRequired(reader, "Enter SLO name: ", "")
