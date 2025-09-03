@@ -70,7 +70,7 @@ slos:
       "SLO доступность услуги {{.RussianSloTitle}}"
     labels:
       category: availability
-      slo_version: 1
+      slo_version: {{.SloVersion}}
     sli:
       events:
         error_query: |
@@ -99,7 +99,7 @@ slos:
       "SLO время ответа услуги {{.RussianSloTitle}}"
     labels:
       category: latency
-      slo_version: 1
+      slo_version: {{.SloVersion}}
     sli:
       raw:
         error_ratio_query: |
