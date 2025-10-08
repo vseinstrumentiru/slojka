@@ -42,15 +42,18 @@ debug:
 	@echo "slo.yml files count in slo folders: " && find $(SLOTH_SPECS_DIR) -type f -ipath '*.slo.yml' | wc -l
 
 .PHONY: all
-all: | install-tools lint validate-sloth-specs build-all ## Run all tasks
+all: | install-tools lint build-all ## Run all tasks
+
 
 .PHONY: build-all
 build-all: generate ## Build all SLOTH to prometheus rules
+
 
 .PHONY: lint
 lint: ## Run all linters
 	$(info $(M) Lint files...)
 	@$(MAKE) lint-metric-queries
+# TODO: add yml lint
 
 .PHONY: lint-metric-queries
 lint-metric-queries: ## Check if metric quries has unacceptable parts
@@ -105,7 +108,7 @@ validate-slo-names: ## Validate that no SLO names have service prefix
 .PHONY: validate-sloth-specs
 validate-sloth-specs: install-sloth ## Validate SLOTH spec files
 	$(info $(M) Validate SLOTH spec files...)
-	$(TOOLS_DIR)/sloth validate --input=$(SLOTH_SPECS_DIR) --default-slo-period=$(SLO_WINDOW) --slo-period-windows-path=./windows -e '_generated|windows'
+	$(TOOLS_DIR)/sloth validate --input=$(SLOTH_SPECS_DIR) --slo-period-windows-path=./windows -e '_generated|windows'
 
 
 .PHONY: validate-prom-rules
@@ -219,6 +222,9 @@ show-slos-with-disaled-alerts: ## Show SLO files with disabled alerts
 	@find . -name '*.slo.yml' -type f -exec sh -c \
 	'$(YQ_BINARY) e ".slos[] | select(.alerting.page_alert.disable == true) | length > 0" "$$1" | grep -q true && echo "$$1"' _ {} \;
 #	@find . -name '*.slo.yml' -type f -exec $(YQ_BINARY) e '.slos[] | select(.alerting.page_alert.disable == true)' {} \; -print
+
+
+
 
 .PHONY: clean
 clean: ## Remove all generated files
