@@ -100,7 +100,7 @@
                 "iconColor": "red",
                 "name": "Incidents",
                 "tagKeys": "service_name,incident_id,state",
-                "textFormat": "<pre><a href=\"http://tasker.vseinstrumenti.ru/issue/{{incident_id}}\">{{incident_id}}</a><br>Состояние: {{state}}</pre>",
+                "textFormat": "<pre><a href=\"http://task-tracker/issue/{{incident_id}}\">{{incident_id}}</a><br>Состояние: {{state}}</pre>",
                 "titleFormat": "Инцидент на сервисе <code>{{service_name}}</code>",
                 "useValueForTime": "on"
             }
@@ -427,7 +427,7 @@
                 {
                     "targetBlank": true,
                     "title": " Описание SLO/SLI",
-                    "url": "https://kb.vseinstrumenti.ru/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22"
+                    "url": "https://confluence/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22"
                 }
             ],
             "options": {
@@ -436,7 +436,7 @@
                     "showLineNumbers": false,
                     "showMiniMap": false
                 },
-                "content": "<a href=\"https://kb.vseinstrumenti.ru/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22\" title=\"Вы должны залогиниться в Confluence для просмотра этого документа\" \r\nstyle=\" padding: 1em; border: 1px #666 solid; color: rgb(192, 216, 255); text-align: center; display: block; margin-left: auto; margin-right: auto;  width: 100%\"\r\n>Открыть документацию SLO ⮫</a>",
+                "content": "<a href=\"https://confluence/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22\" title=\"Вы должны залогиниться в Confluence для просмотра этого документа\" \r\nstyle=\" padding: 1em; border: 1px #666 solid; color: rgb(192, 216, 255); text-align: center; display: block; margin-left: auto; margin-right: auto;  width: 100%\"\r\n>Открыть документацию SLO ⮫</a>",
                 "mode": "html"
             },
             "pluginVersion": "11.6.0",
@@ -480,7 +480,7 @@
                 {
                     "targetBlank": true,
                     "title": " Описание SLO/SLI",
-                    "url": "https://kb.vseinstrumenti.ru/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22"
+                    "url": "https://confluence/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22"
                 }
             ],
             "options": {
@@ -510,7 +510,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "vector(1)\r\n#slo:objective:ratio{sloth_service=\"${service}\", sloth_slo=\"${slo}\"}",
+                    "expr": "vector(1)",
                     "format": "time_series",
                     "instant": true,
                     "interval": "",
@@ -592,10 +592,10 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "1-(\r\n  sum_over_time(\r\n    label_replace(\r\n       slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"}, \"slo_version\", \"0\", \"slo_version\", \"\"\r\n    )[${budget_window_days}d:1h]\r\n  ) \r\n  / on(sloth_id, slo_version)\r\n  (\r\n    label_replace(\r\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\r\n      \"slo_version\", \"0\", \"slo_version\", \"\"\r\n    ) *on() group_left() (24 * ${budget_window_days})\r\n  )\r\n)",
+                    "expr": "1-(\r\n  sum without (feature, title, sli_class) (sum_over_time(\r\n    label_replace(\r\n       slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"}, \"slo_version\", \"0\", \"slo_version\", \"\"\r\n    )[${budget_window_days}d:1h]\r\n  )) \r\n  / on(sloth_id, slo_version)\r\n  sum without (feature, title, sli_class) (\r\n    label_replace(\r\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\r\n      \"slo_version\", \"0\", \"slo_version\", \"\"\r\n    ) *on() group_left() (24 * ${budget_window_days})\r\n  )\r\n)",
                     "instant": true,
                     "interval": "",
-                    "legendFormat": "Остаток бюджета (последние ${budget_window_days}d) v{{slo_version}}",
+                    "legendFormat": "Остаток бюджета в скользящем окне (${budget_window_days}d) v{{slo_version}}",
                     "queryType": "randomWalk",
                     "range": false,
                     "refId": "A"
@@ -1084,7 +1084,7 @@
                 {
                     "targetBlank": true,
                     "title": "Описание SLI/SLO: ${service}-${slo}",
-                    "url": "https://kb.vseinstrumenti.ru/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22"
+                    "url": "https://confluence/dosearchsite.action?cql=siteSearch%20~%20%22%5C%22${service}-${slo}%5C%22%22"
                 }
             ],
             "options": {
@@ -1286,7 +1286,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "1-(\n  sum_over_time(\n    label_replace(\n       slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"}, \"slo_version\", \"0\", \"slo_version\", \"\"\n    )[${budget_window_days}d:1h]\n  ) \n  / on(sloth_id, slo_version)\n  (\n    label_replace(\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n      \"slo_version\", \"0\", \"slo_version\", \"\"\n    ) *on() group_left() (24 * ${budget_window_days})\n  )\n)",
+                    "expr": "1-(\n  sum without (feature, title, sli_class) (sum_over_time(\n    label_replace(\n       slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"}, \"slo_version\", \"0\", \"slo_version\", \"\"\n    )[${budget_window_days}d:1h]\n  )) \n  / on(sloth_id, slo_version)\n  sum without (feature, title, sli_class) (\n    label_replace(\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n      \"slo_version\", \"0\", \"slo_version\", \"\"\n    ) *on() group_left() (24 * ${budget_window_days})\n  )\n)",
                     "hide": false,
                     "interval": "1h",
                     "legendFormat": "Остаток (SLO v{{slo_version}})",
@@ -1523,7 +1523,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "1-(\n  sum_over_time(\n    (\n      label_replace(\n        slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n        \"slo_version\", \"0\", \"slo_version\", \"\"\n      )\n       * on() group_left() (\n         month() == bool vector(${__to:date:M})\n       )\n    )[32d:1h]\n  )\n  / on(sloth_id, slo_version)\n  (\n    label_replace(\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n      \"slo_version\", \"0\", \"slo_version\", \"\"\n    ) *on() group_left() (24 * days_in_month())\n  )\n)",
+                    "expr": "1-(\n  sum without (feature, title, sli_class) (sum_over_time(\n    (\n      label_replace(\n        slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n        \"slo_version\", \"0\", \"slo_version\", \"\"\n      )\n       * on() group_left() (\n         month() == bool vector(${__to:date:M})\n       )\n    )[32d:1h]\n  ))\n  / on(sloth_id, slo_version)\n  sum without (feature, title, sli_class) (\n    label_replace(\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n      \"slo_version\", \"0\", \"slo_version\", \"\"\n    ) *on() group_left() (24 * days_in_month())\n  )\n)",
                     "hide": false,
                     "interval": "1h",
                     "legendFormat": "Остаток реальный (SLO v{{slo_version}})",
@@ -1614,7 +1614,7 @@
                     },
                     "editorMode": "code",
                     "exemplar": false,
-                    "expr": "1-(\n  sum_over_time(\n    (\n      label_replace(\n        slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n        \"slo_version\", \"0\", \"slo_version\", \"\"\n      )\n       * on() group_left() (\n         month() == bool vector(${__to:date:M})\n       )\n    )[32d:1h]\n  )\n  / on(sloth_id, slo_version)\n  (\n    label_replace(\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n      \"slo_version\", \"0\", \"slo_version\", \"\"\n    ) *on() group_left() (24 * days_in_month())\n  )\n)",
+                    "expr": "1-(\n  sum without (feature, title, sli_class) (sum_over_time(\n    (\n      label_replace(\n        slo:sli_error:ratio_rate1h{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n        \"slo_version\", \"0\", \"slo_version\", \"\"\n      )\n       * on() group_left() (\n         month() == bool vector(${__to:date:M})\n       )\n    )[32d:1h]\n  ))\n  / on(sloth_id, slo_version)\n  sum without (feature, title, sli_class) (\n    label_replace(\n      slo:error_budget:ratio{sloth_service=\"${service}\",sloth_slo=\"${slo}\"},\n      \"slo_version\", \"0\", \"slo_version\", \"\"\n    ) *on() group_left() (24 * days_in_month())\n  )\n)",
                     "instant": false,
                     "interval": "1h",
                     "legendFormat": "Остаток бюджета (за календарный месяц) (SLO v{{slo_version}})",
@@ -1838,3 +1838,4 @@
     "version": 4,
     "weekStart": ""
 }
+
